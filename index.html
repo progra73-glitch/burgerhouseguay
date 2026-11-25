@@ -38,7 +38,34 @@ function newItem(){products.push({id:'nuevo'+Date.now(),name:'Nuevo producto',pr
 function editItem(i){const p=products[i];show(`<div class="row"><h2>Editar producto</h2><button class="secondary" onclick="requireAdmin()">← Volver</button></div><label>Nombre</label><input id="en" value="${esc(p.name)}"><label>Precio base</label><input id="ep" type="number" value="${p.price}"><label>Descripción</label><textarea id="ed" rows="3">${esc(p.desc)}</textarea><label>Categoría</label><select id="ec">${['Hamburguesas','Lomitos','Papas','Otros','Bebidas'].map(c=>`<option ${p.category===c?'selected':''}>${c}</option>`).join('')}</select><label>Nueva foto</label><input type="file" accept="image/*" id="ei"><label><input type="checkbox" id="ea" style="width:auto" ${p.active!==false?'checked':''}> Mostrar producto</label><button style="width:100%" onclick="saveEdit(${i})">Guardar cambios online</button>`)}
 async function saveEdit(i){let p=products[i];p.name=document.getElementById('en').value;p.price=Math.max(0,Number(document.getElementById('ep').value)||0);p.desc=document.getElementById('ed').value;p.category=document.getElementById('ec').value;p.active=document.getElementById('ea').checked;const file=document.getElementById('ei').files[0];const finish=async()=>{try{await persistCloud();render();openAdmin();}catch(e){alert('No se pudo guardar online: '+e.message)}};if(file){const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const canvas=document.createElement('canvas'),scale=Math.min(1,700/im.width,700/im.height);canvas.width=Math.round(im.width*scale);canvas.height=Math.round(im.height*scale);canvas.getContext('2d').drawImage(im,0,0,canvas.width,canvas.height);p.image=canvas.toDataURL('image/jpeg',.68);finish()};im.src=r.result};r.readAsDataURL(file)}else finish()}
 document.getElementById('tabs').addEventListener('click',function(e){const btn=e.target.closest('button[data-category]');if(btn){e.preventDefault();setCategory(btn.dataset.category);}});render();updateOrdersUI();loadCloud();
-</script><!-- PANEL ADMIN BURGER HOUSE -->
+async function loadCloud() {
+  try {
+    const response = await fetch('/api/products');
+    if (!response.ok) throw new Error('No se pudo cargar el menú');
+
+    const data = await response.json();
+
+    products = data.products.map(p => ({
+      id: String(p.id),
+      name: p.name,
+      desc: p.description || '',
+      category: ({
+        hamburguesas: 'Hamburguesas',
+        lomitos: 'Lomitos',
+        papas: 'Papas',
+        panchos: 'Otros'
+      })[p.category] || 'Otros',
+      price: Number(p.price),
+      image: p.image_url || '',
+      active: Number(p.available) === 1
+    }));
+
+    render();
+    updateBar();
+  } catch (error) {
+    console.error('Error cargando menú:', error);
+  }
+  }</script><!-- PANEL ADMIN BURGER HOUSE -->
 <div id="admin-panel" style="display:none;position:fixed;inset:0;background:#101010;color:white;z-index:99999;padding:25px;overflow:auto;font-family:Arial,sans-serif">
   <h2 style="color:#70c9b5">BURGER HOUSE | ADMIN</h2>
   <p>Panel de administración</p>
