@@ -1,2 +1,7 @@
 name = "lucky-moon-4f98"
 compatibility_date = "2026-11-25"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "burger-house-db"
+database_id = "b34431d0-3298-405c-a8af-0d6abf70f5af"
